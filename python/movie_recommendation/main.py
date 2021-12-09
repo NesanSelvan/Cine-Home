@@ -120,19 +120,25 @@ def getAllMovies():
                         "id": row[0],
                         "name": row[1],
                         "genre": str(row[2]).split("|"),
-                        "link": defaultYoutubeLink
+                        "link": defaultYoutubeLink,
+                        "series": "",
+                        "cover": ""
                     })
                 else:
                     allMoviesList.append({
                         "id": row[0],
                         "name": row[1],
                         "genre": str(row[2]).split("|"),
-                        "link": youtubeLinkMoviesList[0]['youtubeLink']
+                        "link": defaultYoutubeLink,
+                        "series": "",
+                        "cover": ""
                     })
                     
                 line_count += 1
                 print(row[0])
-# getAllMovies()
+            if(line_count == 3000):
+                break
+getAllMovies()
 @app.route('/movies')
 def getMovies():
     data=pd.read_csv("movies.csv")
@@ -207,61 +213,61 @@ cover = "https://media.istockphoto.com/photos/popcorn-and-clapperboard-picture-i
 def getAllMovies():
     if request.method == 'POST':
         moviesCount = request.json['count']
-        movieYoutubeData = getMoviesYoutubeLink()
+        # movieYoutubeData = getMoviesYoutubeLink()
 
         
-        data = []
-        with open('movies.csv', encoding="utf8") as csv_file:
-            csv_reader = csv.reader(csv_file, delimiter=',')
-            line_count = 0
-            for row in csv_reader:
-                if line_count == 0:
-                    print(f'Column names are {", ".join(row)}')
-                    line_count += 1
-                else:
-                    if(moviesCount < int(row[0])):
-                        break
-                    else:
-                        # try:
-                        #     # getting information
-                        #     series = ia.get_movie(row[0])
+        # data = []
+        # with open('movies.csv', encoding="utf8") as csv_file:
+        #     csv_reader = csv.reader(csv_file, delimiter=',')
+        #     line_count = 0
+        #     for row in csv_reader:
+        #         if line_count == 0:
+        #             print(f'Column names are {", ".join(row)}')
+        #             line_count += 1
+        #         else:
+        #             if(moviesCount < int(row[0])):
+        #                 break
+        #             else:
+        #                 # try:
+        #                 #     # getting information
+        #                 #     series = ia.get_movie(row[0])
 
-                        #     # getting cover url of the series
-                        #     cover = series.data['cover url']
-                        # except print(0):
-                        #     pass
+        #                 #     # getting cover url of the series
+        #                 #     cover = series.data['cover url']
+        #                 # except print(0):
+        #                 #     pass
                         
 
-                        # # printing the object i.e name
-                        # print(series)
+        #                 # # printing the object i.e name
+        #                 # print(series)
 
-                        # # print the cover
-                        # print(cover)
+        #                 # # print the cover
+        #                 # print(cover)
                         
-                        youtubeLinkMoviesList = list(filter(lambda x:x["movieId"]==row[0],movieYoutubeData))
-                        if(len(youtubeLinkMoviesList) == 0):
-                            data.append({
-                                "id": row[0],
-                                "name": row[1],
-                                "genre": str(row[2]).split("|"),
-                                "link": defaultYoutubeLink,
-                                "series": str(series),
-                                "cover": str(cover)
-                            })
-                        else:
-                            data.append({
-                                "id": row[0],
-                                "name": row[1],
-                                "genre": str(row[2]).split("|"),
-                                "link": youtubeLinkMoviesList[0]['youtubeLink'],
-                                "series": str(series),
-                                "cover": str(cover)
-                            })
+        #                 youtubeLinkMoviesList = list(filter(lambda x:x["movieId"]==row[0],movieYoutubeData))
+        #                 if(len(youtubeLinkMoviesList) == 0):
+        #                     data.append({
+        #                         "id": row[0],
+        #                         "name": row[1],
+        #                         "genre": str(row[2]).split("|"),
+        #                         "link": defaultYoutubeLink,
+        #                         "series": str(series),
+        #                         "cover": str(cover)
+        #                     })
+        #                 else:
+        #                     data.append({
+        #                         "id": row[0],
+        #                         "name": row[1],
+        #                         "genre": str(row[2]).split("|"),
+        #                         "link": youtubeLinkMoviesList[0]['youtubeLink'],
+        #                         "series": str(series),
+        #                         "cover": str(cover)
+        #                     })
                             
-                        line_count += 1
-                        print(row[0])
+        #                 line_count += 1
+        #                 print(row[0])
 
-        return jsonify({"data": data})
+        return jsonify({"data": allMoviesList[0: moviesCount]})
     
 @app.route('/getRatings', methods=['POST'])
 def getAllRatings():
@@ -340,14 +346,17 @@ def getMoviesById():
                             "id": row[0],
                             "name": row[1],
                             "genre": str(row[2]).split("|"),
-                            "link": defaultYoutubeLink
+                            "link": defaultYoutubeLink,
+                            "cover": str(cover),
+                            "series": str(cover)
                         })
                     else:
                         data.append({
                             "id": row[0],
                             "name": row[1],
                             "genre": str(row[2]).split("|"),
-                            "link": youtubeLinkMoviesList[0]['youtubeLink']
+                            "link": youtubeLinkMoviesList[0]['youtubeLink'],"cover": str(cover),
+                            "series": str(cover)
                         })
                     line_count += 1
                     print(row[0])
@@ -399,9 +408,8 @@ def searchMovie():
                                     "id": row[0],
                                     "name": row[1],
                                     "genre": str(row[2]).split("|"),
-                                    "link": defaultYoutubeLink,
-                                    "cover": cover,
-                                    "series": cover
+                                    "link": defaultYoutubeLink,"cover": str(cover),
+                            "series": str(cover)
                                 })
                                 break
                             else:
@@ -409,8 +417,8 @@ def searchMovie():
                                     "id": row[0],
                                     "name": row[1],
                                     "genre": str(row[2]).split("|"),
-                                    "link": youtubeLinkMoviesList[0]['youtubeLink'],"cover": cover,
-                                    "series": cover
+                                    "link": youtubeLinkMoviesList[0]['youtubeLink'],"cover": str(cover),
+                            "series": str(cover)
                                 })
                                 break
                                 
@@ -419,6 +427,59 @@ def searchMovie():
 
                         line_count += 1
             print(data)
+        return jsonify({"data": data})
+   
+@app.route('/similarMovies', methods=["POST"])
+def similarityScore():
+    if request.method == 'POST':
+        movieId = request.json['movieId']
+
+
+        movies_df = pd.read_csv("movies.csv")
+        find_movie_similiar_to = int(movieId) #int(input("Enter the id of the movie :"))
+        content_similiarity_matrix_df = pd.read_pickle("Content_SimMatrix.pkl")
+        similar_items = pd.DataFrame(content_similiarity_matrix_df.loc[find_movie_similiar_to])
+        content_similiarity_matrix_df=None
+        similar_items.columns = ["content_similarity_score"]
+        similar_items = similar_items.sort_values('content_similarity_score', ascending=False)
+        similar_items = similar_items.head(10)
+        similar_items.reset_index(inplace=True)
+        similar_items = similar_items.rename(index=str, columns={"index": "movieId"})
+        similar_movies_content = pd.merge(movies_df, similar_items, on="movieId")
+
+        collaborative_similiarity_matrix_df = pd.read_pickle("ratings.pkl")
+        ids = collaborative_similiarity_matrix_df.index
+        collaborative_similiarity_matrix_df = pd.DataFrame(cosine_similarity(collaborative_similiarity_matrix_df),index=ids)
+        collaborative_similiarity_matrix_df.columns = ids
+        similar_items = pd.DataFrame(collaborative_similiarity_matrix_df.loc[find_movie_similiar_to])
+        collaborative_similiarity_matrix_df = None
+        similar_items.columns = ["collaborative_similarity_score"]
+        similar_items = similar_items.sort_values('collaborative_similarity_score', ascending=False)
+        similar_items = similar_items.head(10)
+        similar_items.reset_index(inplace=True)
+        similar_items = similar_items.rename(index=str, columns={"index": "movieId"})
+        similar_movies_collab = similar_items
+        similar_movies_collab = pd.merge(movies_df, similar_movies_collab, on="movieId")
+        similar_movies_collab = similar_movies_collab.sort_values('collaborative_similarity_score', ascending=False)
+
+        similiar_hybrid_df = pd.merge(similar_movies_collab, pd.DataFrame(similar_movies_content['content_similarity_score']), left_index=True, right_index=True)
+        similiar_hybrid_df['average_similarity_score'] = (similiar_hybrid_df['content_similarity_score'] + similiar_hybrid_df['collaborative_similarity_score']) / 2
+        similiar_hybrid_df.drop("collaborative_similarity_score", axis=1, inplace=True)
+        similiar_hybrid_df.drop("content_similarity_score", axis=1, inplace=True)
+        similiar_hybrid_df.sort_values('average_similarity_score', ascending=False, inplace=True)
+        print(similiar_hybrid_df)
+        data = []
+
+        print(similiar_hybrid_df['movieId'])
+        for i in range(0, len(similiar_hybrid_df['movieId']) - 1):
+            data.append({
+                "id": str(similiar_hybrid_df['movieId'][i]),
+                "name": str(similiar_hybrid_df['title'][i]),
+                "genre": str(similiar_hybrid_df['genres'][i]).split("|"),
+                "link": str(defaultYoutubeLink),"cover": str(cover),
+                            "series": str(cover)
+            })
+        print(data)
         return jsonify({"data": data})
         
 @app.route('/genre', methods=["POST"])

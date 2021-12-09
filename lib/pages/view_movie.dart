@@ -19,12 +19,14 @@ class _ViewMovieState extends State<ViewMovie> {
   String movieName = "";
   String year = "";
   List<RatingsModel> ratings = [];
-  bool isLoading = true;
+  bool isLoading = true, isRatingLoading = true;
 
   getRatingForMovie() async {
     ratings = await API().getRatingsByMovieId(widget.moviesModel.id, "20000");
+    isRatingLoading = false;
+    setState(() {});
     favMoviesList =
-        await API().getMoviesByFavourite(widget.moviesModel.genre, 5);
+        await API().getSimilarMoviesByMovieId(widget.moviesModel.id);
     isLoading = false;
     setState(() {});
   }
@@ -120,7 +122,7 @@ class _ViewMovieState extends State<ViewMovie> {
                           SizedBox(
                             height: 10,
                           ),
-                          isLoading
+                          isRatingLoading
                               ? Container(
                                   width: 10,
                                   height: 10,

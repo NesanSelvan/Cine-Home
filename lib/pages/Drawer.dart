@@ -64,8 +64,7 @@ class NgrokUrl extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ngrokController = TextEditingController(
-        text: "http://8d06-2409-4072-6c04-2b2d-ed81-136f-4262-90ae.ngrok.io");
+    final ngrokController = TextEditingController(text: ngRokUrl);
     return Scaffold(
       appBar: AppBar(
         title: Text("Ngrok"),

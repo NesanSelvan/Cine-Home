@@ -8,10 +8,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-String ngRokUrl =
-    "https://1077-2409-4072-6c04-2b2d-ed81-136f-4262-90ae.ngrok.io";
+String ngRokUrl = "https://4dfa-117-201-16-252.ngrok.io";
 
-class API { 
+class API {
   final header = <String, String>{
     'Content-Type': 'application/json; charset=UTF-8',
   };
@@ -101,6 +100,24 @@ class API {
     final response = await http.post(Uri.parse(ngRokUrl + "/searchMovie"),
         headers: header,
         body: jsonEncode(<String, dynamic>{"count": count, "name": moviename}));
+    // print(response.body);
+    final jsonDecoded = jsonDecode(response.body);
+    List<MoviesModel> data = [];
+    for (final item in jsonDecoded['data']) {
+      final map = item as Map<String, dynamic>;
+      print("map : $map");
+      final upcomingMovies = MoviesModel.fromJson(map);
+
+      data.add(upcomingMovies);
+    }
+
+    return data;
+  }
+
+  Future<List<MoviesModel>> getSimilarMoviesByMovieId(String movieID) async {
+    final response = await http.post(Uri.parse(ngRokUrl + "/similarMovies"),
+        headers: header,
+        body: jsonEncode(<String, dynamic>{"movieId": movieID}));
     // print(response.body);
     final jsonDecoded = jsonDecode(response.body);
     List<MoviesModel> data = [];
