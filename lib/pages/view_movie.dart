@@ -22,11 +22,15 @@ class _ViewMovieState extends State<ViewMovie> {
   bool isLoading = true, isRatingLoading = true;
 
   getRatingForMovie() async {
-    ratings = await API().getRatingsByMovieId(widget.moviesModel.id, "20000");
-    isRatingLoading = false;
+    API().getRatingsByMovieId(widget.moviesModel.id, "20000").then((value) {
+      setState(() {
+        ratings = value;
+        isRatingLoading = false;
+      });
+    });
     setState(() {});
     favMoviesList =
-        await API().getSimilarMoviesByMovieId(widget.moviesModel.id);
+        await API().getContentBasedSimilarityByMovieId(widget.moviesModel.id);
     isLoading = false;
     setState(() {});
   }

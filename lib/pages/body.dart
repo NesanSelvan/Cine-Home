@@ -27,7 +27,7 @@ class body extends StatefulWidget {
 
 class _bodyState extends State<body> {
   List<MoviesModel> favMoviesList = [];
-  bool isLoading = true;
+  bool isLoading = true, isMoreLoading = false;
   void getMoviesByFav() async {
     try {
       final fav = await Userfirestore.getMyFavourites();
@@ -49,133 +49,161 @@ class _bodyState extends State<body> {
     SizeConfig().init(context);
     final user = FirebaseAuth.instance.currentUser;
 
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          SizedBox(
-            width: 20,
-          ),
-          Container(
-            margin: EdgeInsets.all(10),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey[700]!),
-                borderRadius: BorderRadius.circular(10)),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
+    return Stack(
+      children: [
+        SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              SizedBox(
+                width: 20,
+              ),
+              Container(
+                margin: EdgeInsets.all(10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey[700]!),
+                    borderRadius: BorderRadius.circular(10)),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      "Hello  ",
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          fontSize: 16),
+                    Row(
+                      children: [
+                        Text(
+                          "Hello  ",
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              fontSize: 16),
+                        ),
+                        Text(
+                          user!.displayName ?? "",
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: kPrimaryColor),
+                        ),
+                      ],
                     ),
-                    Text(
-                      user!.displayName ?? "",
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          color: kPrimaryColor),
+                    Container(
+                      margin: EdgeInsets.only(right: 10),
+                      child: InkWell(
+                          onTap: () {},
+                          child:
+                              Icon(Icons.cancel_outlined, color: Colors.red)),
                     ),
                   ],
                 ),
-                Container(
-                  margin: EdgeInsets.only(right: 10),
-                  child: InkWell(
-                      onTap: () {},
-                      child: Icon(Icons.cancel_outlined, color: Colors.red)),
+              ),
+
+              //       if ( user != null) {
+              //   print("Signed out " + user.displayName);
+              // },
+
+              // name = Text(user!.displayName ?? ""),
+              _buildbody(),
+              Moviecarousel(),
+              SizedBox(
+                height: 20,
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 25),
+                child: Text(
+                  "Movie based on your Favourite",
+                  style: TextStyle(
+                      color: kPrimaryColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15),
                 ),
-              ],
-            ),
-          ),
-
-          //       if ( user != null) {
-          //   print("Signed out " + user.displayName);
-          // },
-
-          // name = Text(user!.displayName ?? ""),
-          _buildbody(),
-          Moviecarousel(),
-          SizedBox(
-            height: 20,
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 25),
-            child: Text(
-              "Movie based on your Favourite",
-              style: TextStyle(
-                  color: kPrimaryColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15),
-            ),
-          ),
-          isLoading
-              ? Container(
-                  height: 155,
-                  width: MediaQuery.of(context).size.width,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        child: CircularProgressIndicator(),
-                      ),
-                    ],
-                  ))
-              : Container(
-                  height: 175,
-                  child: ListView(
-                    physics: BouncingScrollPhysics(),
-                    scrollDirection: Axis.horizontal,
-                    children: <Widget>[
-                      Padding(
-                        padding:
-                            const EdgeInsets.only(top: 20, right: 2, bottom: 0),
-                        child: Row(
-                          children: favMoviesList
-                              .map(
-                                (e) => Row(
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 5, vertical: 2),
-                                      child: Container(
-                                        child: MovieContainer(moviesModel: e),
-                                      ),
+              ),
+              isLoading
+                  ? Container(
+                      height: 155,
+                      width: MediaQuery.of(context).size.width,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            child: CircularProgressIndicator(),
+                          ),
+                        ],
+                      ))
+                  : Container(
+                      height: 175,
+                      child: ListView(
+                        physics: BouncingScrollPhysics(),
+                        scrollDirection: Axis.horizontal,
+                        children: <Widget>[
+                          Padding(
+                            padding: const EdgeInsets.only(
+                                top: 20, right: 2, bottom: 0),
+                            child: Row(
+                              children: favMoviesList
+                                  .map(
+                                    (e) => Row(
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 5, vertical: 2),
+                                          child: Container(
+                                            child:
+                                                MovieContainer(moviesModel: e),
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
-                              )
-                              .toList(),
-                        ),
+                                  )
+                                  .toList(),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
+                    ),
 
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-                onPressed: () async {
-                  final fav = await Userfirestore.getMyFavourites();
-                  favMoviesList = await API().getMoviesByFavourite(fav, 50);
-                  setState(() {});
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => MoviesScreen(
-                              screenTitle: "Favourite Movies",
-                              moviesList: favMoviesList)));
-                },
-                child: Text("More>")),
-          )
-        ],
-      ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                    onPressed: () async {
+                      isMoreLoading = true;
+                      setState(() {});
+                      final fav = await Userfirestore.getMyFavourites();
+                      favMoviesList = await API().getMoviesByFavourite(fav, 50);
+                      isMoreLoading = false;
+                      setState(() {});
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => MoviesScreen(
+                                  screenTitle: "Favourite Movies",
+                                  moviesList: favMoviesList)));
+                    },
+                    child: Text("More>")),
+              )
+            ],
+          ),
+        ),
+        isMoreLoading
+            ? Container(
+                width: MediaQuery.of(context).size.width,
+                height: MediaQuery.of(context).size.height,
+                color: Colors.black.withOpacity(0.6),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 50,
+                      height: 50,
+                      child: CircularProgressIndicator(),
+                    )
+                  ],
+                ),
+              )
+            : Container(),
+      ],
     );
   }
 }

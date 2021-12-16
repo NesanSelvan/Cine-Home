@@ -6,74 +6,111 @@ import matplotlib.pyplot as plt
 from scipy.sparse import csr_matrix
 from flask import Flask
 from flask import jsonify,request,make_response,url_for,redirect
-
+from contextlib import contextmanager
+import pickle
+from re import split
+from numpy import void
+import pandas as pd
+from sklearn.metrics.pairwise import cosine_similarity
+import json
+from imdb import IMDb
+import hyperlink
+from contextlib import contextmanager
+import pickle
+from re import split
+from numpy import void
+import pandas as pd
+from sklearn.metrics.pairwise import cosine_similarity
+import json
+from imdb import IMDb
+import hyperlink
 class MovieRecommender():
 
-    def __init__(self):
-        self.content_similiarity_matrix_df = pd.read_pickle("Content_SimMatrix.pkl")
-        # self.collaborative_similiarity_matrix_df = pd.read_pickle("Collab_SimMatrix.pkl")
-        self.movies_df = pd.read_csv("movies.csv")
-        self.ratings_df= pd.read_csv("ratings.csv")
+    def __init__(self,id):
+         if(id == 0):
+            Collab_Matrix = pd.read_pickle("ratings.pkl")
+            max_id = list(Collab_Matrix.columns)
+            a = max_id[-1]
+            self.id = a + 1
+            Collab_Matrix[self.id] = 0.0
+            Collab_Matrix.to_pickle("ratings.pkl")
+            Collab_Matrix = None
+         else:
+            self.id = id
+         self.watchlist_name = "ID_"+str(self.id)+"_Watchlist.json"
+         self.movie_recommend = "ID_"+str(self.id)+"_Movies.pkl"
+         if(id == 0):
+            dictionary = {}
+            with open(self.watchlist_name, 'w') as f:
+                f.write(json.dumps(dictionary))
+
 
     def lookup_movie_id_by_title(movie_title):
         print(movies[movies.title.str.contains(movie_title)])
 
-    def create_similiarity_matrix():
-         similarity_matrix = pd.DataFrame(cosine_similarity(genome, genome), index=ids)
-         similarity_matrix.columns = ids
+    
+    def Content_Recommender_individual_movie(self, movieId):
+        find_movie_similiar_to = int(movieId)
+        similar_items = pd.read_pickle("Content_SimMatrix.pkl").loc[find_movie_similiar_to]
+        similar_items = similar_items.sort_values( ascending=False).head(20)
+        similar_items = similar_items.drop(find_movie_similiar_to)
+        ids = similar_items.index.tolist()
+        return ids
 
-    def Content_Recommender(self):
-        find_movie_similiar_to = input("Enter the id of the movie :")
-        similar_items = pd.DataFrame(self.content_similiarity_matrix_df.loc[find_movie_similiar_to])
-        similar_items.columns = ["content_similarity_score"]
-        similar_items = similar_items.sort_values('content_similarity_score', ascending=False)
-        similar_items = similar_items.head(10)
-        similar_items.reset_index(inplace=True)
-        similar_items = similar_items.rename(index=str, columns={"index": "movieId"})
-        similar_movies_content = pd.merge(self.movies_df, similar_items, on="movieId")
-        self.similar_movies_content = similar_movies_content
-        return similar_movies_content
-
-    def Collab_Recommender(self):
+    def Collab_Recommender_individual_movie(self):
         find_movie_similiar_to = int(input("Enter the id of the movie :"))
-        similar_items = pd.DataFrame(self.collaborative_similiarity_matrix_df.loc[find_movie_similiar_to])
-        similar_items.columns = ["collab_similarity_score"]
-        similar_items = similar_items.sort_values('collab_similarity_score', ascending=False)
-        similar_items = similar_items.head(10)
-        similar_items.reset_index(inplace=True)
-        similar_items = similar_items.rename(index=str, columns={"index": "movieId"})
-        similar_movies_collab = similar_items
-        similar_movies_collab = pd.merge(self.movies_df, similar_movies_collab, on="movieId")
-        similar_movies_collab = similar_movies_collab.sort_values('collab_similarity_score', ascending=False)
-        self.similar_movies_collab = similar_movies_collab
-        return similar_movies_collab
+        similar_items = pd.read_pickle("Collab_SimMatrix.pkl").loc[find_movie_similiar_to]
+        similar_items = similar_items.sort_values( ascending=False).head(20)
+        similar_items = similar_items.drop(find_movie_similiar_to)
+        ids = similar_items.index.tolist
+        return ids
+   
 
-    def Hybird_Recommender(self):
-        find_movie_similiar_to = int(input("Enter the id of the movie :"))
-        similar_items = pd.DataFrame(self.content_similiarity_matrix_df.loc[find_movie_similiar_to])
-        similar_items.columns = ["content_similarity_score"]
-        similar_items = similar_items.sort_values('content_similarity_score', ascending=False)
-        similar_items = similar_items.head(10)
-        similar_items.reset_index(inplace=True)
-        similar_items = similar_items.rename(index=str, columns={"index": "movieId"})
-        similar_movies_content = pd.merge(self.movies_df, similar_items, on="movieId")
+    def update_data(self):
+        with open(self.watchlist_name,'r') as file:
+            watchlist =  data = json.load(file)
+        keys = list(map(int,list(watchlist.keys())))
 
-        similar_items = pd.DataFrame(self.collaborative_similiarity_matrix_df.loc[find_movie_similiar_to])
-        similar_items.columns = ["collaborative_similarity_score"]
-        similar_items = similar_items.sort_values('collaborative_similarity_score', ascending=False)
-        similar_items = similar_items.head(10)
-        similar_items.reset_index(inplace=True)
-        similar_items = similar_items.rename(index=str, columns={"index": "movieId"})
-        similar_movies_collab = similar_items
-        similar_movies_collab = pd.merge(self.movies_df, similar_movies_collab, on="movieId")
-        similar_movies_collab = similar_movies_collab.sort_values('collaborative_similarity_score', ascending=False)
+        user_Content_matrix = pd.read_pickle("Content_SimMatrix.pkl").loc[:,keys ]
+        for i in keys:
+            user_Content_matrix[i] = user_Content_matrix[i].apply(lambda x: x * watchlist[str(i)])
+        user_Content_matrix['mean'] = user_Content_matrix.mean(axis=1)
+        user_Content_matrix = user_Content_matrix['mean']
 
-        similiar_hybrid_df = pd.merge(similar_movies_collab, pd.DataFrame(similar_movies_content['content_similarity_score']), left_index=True, right_index=True)
-        similiar_hybrid_df['average_similarity_score'] = (similiar_hybrid_df['content_similarity_score'] + similiar_hybrid_df['collaborative_similarity_score']) / 2
-        similiar_hybrid_df.drop("collaborative_similarity_score", axis=1, inplace=True)
-        similiar_hybrid_df.drop("content_similarity_score", axis=1, inplace=True)
-        similiar_hybrid_df.sort_values('average_similarity_score', ascending=False, inplace=True)
-        return similiar_hybrid_df
+        Collab_Matrix = pd.read_pickle("ratings.pkl")
+        for i in watchlist.keys():
+            Collab_Matrix.at[int(i),self.id] = watchlist[i]
+        Collab_Matrix.to_pickle("ratings.pkl")
+        ids = Collab_Matrix.index.tolist()
+        Collab_Matrix = cosine_similarity(Collab_Matrix,Collab_Matrix)
+        Collab_Matrix = pd.DataFrame(Collab_Matrix,index = ids)
+        Collab_Matrix.columns = ids
+        Collab_Matrix = Collab_Matrix.loc[:, keys]
+        Collab_Matrix['mean'] = Collab_Matrix.mean(axis=1)
+        Collab_Matrix = Collab_Matrix['mean']
+
+        Final_Matrix = pd.merge(Collab_Matrix,user_Content_matrix,left_index=True, right_index=True)
+        user_Content_matrix = None
+        Collab_Matrix = None
+        Final_Matrix = Final_Matrix.mean(axis=1)
+        Final_Matrix = Final_Matrix.drop(keys)
+        Final_Matrix = Final_Matrix.sort_values(ascending=False).head(10)
+        ids = Final_Matrix.index.tolist()
+        Final_Matrix = None
+        ia = IMDb()
+        for i in ids:
+            movie = ia.get_movie(i)
+            print(movie['cover url'], movie['title'] + '(' + str(movie['year']) + ')')
+        #with open(self.movie_recommend, 'wb') as f:
+         #   pickle.dump(ids,f)
+
+    def add_to_watchlist(self,new_movies):
+        with open(self.watchlist_name, "r+") as file:
+            data = json.load(file)
+            data.update(new_movies)
+            file.seek(0)
+            json.dump(data,file)
+
 
 # MovieRecommender().Content_Recommender()
 app = Flask(__name__)
@@ -531,6 +568,84 @@ def genre():
 
                         line_count += 1
             print(data)
+        return jsonify({"data": data})
+    
+    
+    
+@app.route('/contentbasedmovie', methods=["POST"])
+def contentbasedmovie():
+    if request.method == 'POST':
+        moviesCount = request.json['count']
+        movieId = request.json['movieId']
+        data = []
+        # movieId = "30"
+        imdbID = 0
+        with open('movies.csv', encoding="utf8") as csv_file:
+            csv_reader = csv.reader(csv_file, delimiter=',')
+            line_count = 0
+            for row in csv_reader:
+                if line_count == 0:
+                    print(f'Column names are {", ".join(row)}')
+                    line_count += 1
+                else:
+                    if(str(row[0]) == str(movieId)) :
+                        imdbID = row[3]
+                        break
+                    line_count += 1
+        print("IMDB ID" + str(imdbID))
+        if(imdbID == 0):
+            imdbID = 114709
+        movieRec = MovieRecommender(0)
+        ids:list = movieRec.Content_Recommender_individual_movie(imdbID)
+        print(ids)
+        with open('movies.csv', encoding="utf8") as csv_file:
+            csv_reader = csv.reader(csv_file, delimiter=',')
+            line_count = 0
+            for row in csv_reader:
+                if line_count == 0:
+                    print(f'Column names are {", ".join(row)}')
+                    line_count += 1
+                else:
+                    if moviesCount == 0:
+                        print("IMDB ID " + row[3])
+                        if len(ids) <= 10:
+                            if(len(ids) == len(data)):
+                                break
+                        elif len(data) == 10:
+                            break
+                        elif(ids.__contains__(int(row[3]))) :
+                            data.append({
+                                "id": row[0],
+                                "name": row[1],
+                                "genre": str(row[2]).split("|"),
+                                "link": defaultYoutubeLink,
+                                "cover": cover,
+                                "series": cover
+                            })
+                        line_count += 1
+                    elif(moviesCount < int(row[0])):
+                        break
+                    else:
+                        print("IMDB ID " + row[3])
+                        if len(ids) <= 10:
+                            if(len(ids) == len(data)):
+                                break
+                        elif len(data) == 10:
+                            break
+                        elif(ids.__contains__(int(row[3]))) :
+                            data.append({
+                                "id": row[0],
+                                "name": row[1],
+                                "genre": str(row[2]).split("|"),
+                                "link": defaultYoutubeLink,
+                                "cover": cover,
+                                "series": cover
+                            })
+                        line_count += 1
+        
+
+
+        
         return jsonify({"data": data})
 
 app.run(port=5050)
