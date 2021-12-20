@@ -1,9 +1,11 @@
 import 'package:basics/constants/constants.dart';
+import 'package:basics/db/user.dart';
 import 'package:basics/models/movies.dart';
 import 'package:basics/models/ratings.dart';
 import 'package:basics/pages/movies_screen.dart';
 import 'package:basics/services/api.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
 class ViewMovie extends StatefulWidget {
   final MoviesModel moviesModel;
@@ -20,6 +22,7 @@ class _ViewMovieState extends State<ViewMovie> {
   String year = "";
   List<RatingsModel> ratings = [];
   bool isLoading = true, isRatingLoading = true;
+  double ratingsGiven = 2;
 
   getRatingForMovie() async {
     API().getRatingsByMovieId(widget.moviesModel.id, "20000").then((value) {
@@ -31,6 +34,7 @@ class _ViewMovieState extends State<ViewMovie> {
     setState(() {});
     favMoviesList =
         await API().getContentBasedSimilarityByMovieId(widget.moviesModel.id);
+    debugPrint("Movie ID List : ${favMoviesList.length}");
     isLoading = false;
     setState(() {});
   }
@@ -227,10 +231,67 @@ class _ViewMovieState extends State<ViewMovie> {
                           .toList(),
                     ),
                   ),
+                  Row(children: [
+                    Text(
+                      "Enter your Rating for this movie",
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold, letterSpacing: 0.7),
+                    ),
+                  ]),
+                  SizedBox(
+                    height: 10,
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      RatingBar.builder(
+                        initialRating: ratingsGiven,
+                        minRating: 1,
+                        direction: Axis.horizontal,
+                        allowHalfRating: true,
+                        itemCount: 5,
+                        itemPadding: EdgeInsets.symmetric(horizontal: 2.0),
+                        itemSize: 30,
+                        itemBuilder: (context, _) => Icon(
+                          Icons.star,
+                          color: Colors.amber,
+                        ),
+                        onRatingUpdate: (rating) {
+                          print(rating);
+                          ratingsGiven = rating;
+                          setState(() {});
+                        },
+                      ),
+                      RaisedButton(
+                        onPressed: () async {
+                          final userId =
+                              await Userfirestore.getCurrentCustomUserID();
+                          if (userId == null) {
+                            return;
+                          }
+                          API().submitRatings(
+                              userId, widget.moviesModel.id, "$ratingsGiven");
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            content: Text(
+                              "Ratings Submitted successfully",
+                              style: TextStyle(color: Colors.black),
+                            ),
+                            backgroundColor: Colors.green[300],
+                          ));
+                        },
+                        child: Text("Submit",
+                            style: TextStyle(color: Colors.black)),
+                        color: Colors.yellow,
+                      )
+                    ],
+                  ),
+                  SizedBox(
+                    height: 8,
+                  ),
                   Row(
                     children: [
                       Text(
-                        "Recommanded  ",
+                        "Recommended  ",
                         style: TextStyle(
                             letterSpacing: 0.7,
                             fontWeight: FontWeight.bold,

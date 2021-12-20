@@ -3,6 +3,7 @@ import 'package:basics/pages/Login_page.dart';
 import 'package:basics/pages/home_page.dart';
 import 'package:basics/pages/moviePage.dart';
 import 'package:basics/pages/search.dart';
+import 'package:basics/pages/splash.dart';
 import 'package:basics/utils/MyRoutes.dart';
 import 'package:basics/utils/database.dart';
 import './pages/register.dart';
@@ -41,9 +42,11 @@ class MyApp extends StatelessWidget {
       darkTheme: ThemeData(
         brightness: Brightness.dark,
       ),
+      debugShowCheckedModeBanner: false,
       initialRoute: "/",
       routes: {
-        "/": (context) => LoginPage(),
+        "/": (context) => SpashScreen(),
+        MyRoutes.splashRoute: (context) => SpashScreen(),
         MyRoutes.homeRoute: (context) => HomePage(),
         MyRoutes.loginRoute: (context) => LoginPage(),
         MyRoutes.registerRoute: (context) => register(),

@@ -2,6 +2,7 @@ class UserModel {
   late String email;
   late String userPhoto;
   late String name;
+  late String? customUserId;
   late List<String> favourites;
 
   UserModel(
@@ -14,6 +15,7 @@ class UserModel {
     email = jsonData['email'];
     name = jsonData['name'];
     userPhoto = jsonData['userPhoto'];
+    customUserId = "${jsonData['customUserId']}";
     final g = jsonData['favourites'] as List;
     List<String> gen = [];
     for (var item in g) {

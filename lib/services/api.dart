@@ -8,7 +8,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-String ngRokUrl = "https://2790-117-212-188-82.ngrok.io";
+String ngRokUrl = "https://eaa2-117-200-147-36.ngrok.io";
 
 class API {
   final header = <String, String>{
@@ -52,6 +52,23 @@ class API {
     return data;
   }
 
+  Future<void> apiTesting() async {
+    final response =
+        await http.get(Uri.parse(ngRokUrl + "/some"), headers: header);
+    print(response.body);
+  }
+
+  Future<String> getUserId() async {
+    final response =
+        await http.get(Uri.parse(ngRokUrl + "/getNewUserId"), headers: header);
+    print(response.body);
+    try {
+      return "${(jsonDecode(response.body) as Map<String, dynamic>)['data']}";
+    } catch (e) {
+      return "4";
+    }
+  }
+
   Future<List<String>> getAllCategories() async {
     final response = await http.get(Uri.parse(ngRokUrl + "/getAllCategory"),
         headers: header);
@@ -77,6 +94,16 @@ class API {
     return movies;
   }
 
+  Future<void> submitRatings(
+      String userId, String movieId, String ratings) async {
+    debugPrint("Movies API Called...");
+    final response = await http.post(Uri.parse(ngRokUrl + "/updateRating"),
+        headers: header,
+        body: jsonEncode(
+            {"movieId": movieId, "userId": userId, "ratings": ratings}));
+    debugPrint("Ratings Response : ${response.body}");
+  }
+
   Future<List<MoviesModel>> getMoviesByFavourite(
       List<String> fav, int count) async {
     final response = await http.post(Uri.parse(ngRokUrl + "/genre"),
@@ -92,8 +119,33 @@ class API {
 
       data.add(upcomingMovies);
     }
-
+    data.shuffle();
     return data;
+  }
+
+  Future<List<MoviesModel>> getMoviesByRecommandation(
+      String userId, int count) async {
+    try {
+      final response = await http.post(
+          Uri.parse(ngRokUrl + "/getMovieByRecommendation"),
+          headers: header,
+          body: jsonEncode(
+              <String, dynamic>{"moviesCount": count, "userId": userId}));
+      print(response.body);
+      final jsonDecoded = jsonDecode(response.body);
+      List<MoviesModel> data = [];
+      for (final item in jsonDecoded['data']) {
+        final map = item as Map<String, dynamic>;
+        print("map : $map");
+        final upcomingMovies = MoviesModel.fromJson(map);
+
+        data.add(upcomingMovies);
+      }
+      data.shuffle();
+      return data;
+    } catch (e) {
+      return [];
+    }
   }
 
   Future<List<MoviesModel>> searchMovie(String moviename, int count) async {
@@ -139,7 +191,7 @@ class API {
           await http.post(Uri.parse(ngRokUrl + "/contentbasedmovie"),
               headers: header,
               body: jsonEncode(<String, dynamic>{
-                "movieId": "1",
+                "movieId": movieID,
                 "count": 0,
               }));
       // print(response.body);

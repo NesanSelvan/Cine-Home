@@ -27,13 +27,22 @@ class body extends StatefulWidget {
 
 class _bodyState extends State<body> {
   List<MoviesModel> favMoviesList = [];
-  bool isLoading = true, isMoreLoading = false;
+  List<MoviesModel> moviesList = [];
+  bool isLoading = true, isMoreLoading = false, isRecoLoading = true;
   void getMoviesByFav() async {
     try {
       final fav = await Userfirestore.getMyFavourites();
+      // favMoviesList = await API().getMoviesByFavourite(fav, 5);
       favMoviesList = await API().getMoviesByFavourite(fav, 5);
-      isLoading = false;
-      setState(() {});
+      setState(() {
+        isLoading = false;
+      });
+      final userId = await Userfirestore.getCurrentCustomUserID();
+      API().getMoviesByRecommandation(userId!, 10).then((value) {
+        moviesList = value;
+        isRecoLoading = false;
+        setState(() {});
+      });
     } catch (e) {}
   }
 
@@ -162,7 +171,6 @@ class _bodyState extends State<body> {
                         ],
                       ),
                     ),
-
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
@@ -180,8 +188,67 @@ class _bodyState extends State<body> {
                                   screenTitle: "Favourite Movies",
                                   moviesList: favMoviesList)));
                     },
-                    child: Text("More>")),
-              )
+                    child: Text("More >")),
+              ),
+
+              SizedBox(
+                height: 20,
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 25),
+                child: Text(
+                  "Movie based on your Recommendation",
+                  style: TextStyle(
+                      color: kPrimaryColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15),
+                ),
+              ),
+              isRecoLoading
+                  ? Container(
+                      height: 155,
+                      width: 155,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            child: CircularProgressIndicator(),
+                          ),
+                        ],
+                      ))
+                  : Container(
+                      height: 175,
+                      child: ListView(
+                        physics: BouncingScrollPhysics(),
+                        scrollDirection: Axis.horizontal,
+                        children: <Widget>[
+                          Padding(
+                            padding: const EdgeInsets.only(
+                                top: 20, right: 2, bottom: 0),
+                            child: Row(
+                              children: moviesList
+                                  .map(
+                                    (e) => Row(
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 5, vertical: 2),
+                                          child: Container(
+                                            child:
+                                                MovieContainer(moviesModel: e),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                  .toList(),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
             ],
           ),
         ),

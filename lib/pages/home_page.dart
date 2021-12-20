@@ -65,6 +65,7 @@ class _HomePageState extends State<HomePage> {
         }
       } catch (e) {}
     }
+    await Userfirestore.addIfCustomUserIdNotExists();
   }
 
   @override
